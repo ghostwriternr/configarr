@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  src ? null,
   ...
 }:
 pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
@@ -27,7 +28,6 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   meta = {
-    changelog = "https://github.com/raydak-labs/configarr/blob/${finalAttrs.src.rev}/CHANGELOG.md";
     description = "Sync TRaSH Guides + custom configs with Sonarr/Radarr";
     homepage = "https://github.com/raydak-labs/configarr";
     license = lib.licenses.agpl3Only;
@@ -46,16 +46,18 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
 
   pnpmDeps = pkgs.pnpm.fetchDeps {
     fetcherVersion = 1;
-    hash = "sha256-0P5gT29uLCmm10Xerk9ZVblEoauTEd9jzi0jseO3Ojc=";
-    inherit (finalAttrs) pname src version;
+    hash = "sha256-9530fpvRS3yzfmNlmALAEXvWiOtJeouv0FzEjUv+JLs=";
+    inherit (finalAttrs) pname version;
+    src = finalAttrs.src;
   };
 
-  src = pkgs.fetchFromGitHub {
+  # Use provided src (from flake's self) or fall back to fetching from GitHub
+  src = if src != null then src else pkgs.fetchFromGitHub {
     owner = "raydak-labs";
     repo = "configarr";
     rev = "v${finalAttrs.version}";
     hash = "sha256-fgv6wiK5wh0jAczJWy3Iqs3OK81ckNr3bOZD32bTCQQ=";
   };
 
-  version = "1.17.2";
+  version = if src != null then "dev" else "1.17.2";
 })

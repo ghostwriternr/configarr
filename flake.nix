@@ -8,6 +8,7 @@
   };
 
   outputs = {
+    self,
     flake-parts,
     nixpkgs,
     ...
@@ -30,6 +31,7 @@
         packages.default = import ./pkgs/nix/package.nix {
           inherit pkgs;
           inherit (pkgs) lib;
+          src = self;
         };
       };
     };
