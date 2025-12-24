@@ -4,7 +4,26 @@
   src ? null,
   ...
 }:
-pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
+let
+  # Determine if we're building from local source or upstream
+  useLocalSrc = src != null;
+  localSrc = src;
+  version = if useLocalSrc then "dev" else "1.17.2";
+
+  upstreamSrc = pkgs.fetchFromGitHub {
+    owner = "raydak-labs";
+    repo = "configarr";
+    rev = "v${version}";
+    hash = "sha256-fgv6wiK5wh0jAczJWy3Iqs3OK81ckNr3bOZD32bTCQQ=";
+  };
+
+  finalSrc = if useLocalSrc then localSrc else upstreamSrc;
+in
+pkgs.stdenvNoCC.mkDerivation {
+  pname = "configarr";
+  inherit version;
+  src = finalSrc;
+
   buildPhase = ''
     runHook preBuild
     pnpm build
@@ -42,22 +61,11 @@ pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
     pkgs.pnpm.configHook
   ];
 
-  pname = "configarr";
-
   pnpmDeps = pkgs.pnpm.fetchDeps {
+    pname = "configarr";
+    inherit version;
+    src = finalSrc;
     fetcherVersion = 1;
     hash = "sha256-9530fpvRS3yzfmNlmALAEXvWiOtJeouv0FzEjUv+JLs=";
-    inherit (finalAttrs) pname version;
-    src = finalAttrs.src;
   };
-
-  # Use provided src (from flake's self) or fall back to fetching from GitHub
-  src = if src != null then src else pkgs.fetchFromGitHub {
-    owner = "raydak-labs";
-    repo = "configarr";
-    rev = "v${finalAttrs.version}";
-    hash = "sha256-fgv6wiK5wh0jAczJWy3Iqs3OK81ckNr3bOZD32bTCQQ=";
-  };
-
-  version = if src != null then "dev" else "1.17.2";
-})
+}
